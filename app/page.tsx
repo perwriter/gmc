@@ -26,18 +26,32 @@ export default function Home() {
       const res = await fetch('/api/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gmcNumber }),
+        body: JSON.stringify({ gmcNumber, registrantName }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResult(data);
 
-      // Check if the name entered matches the registrant name
-      if (data.registrantNameId.toLowerCase() === registrantName.toLowerCase()) {
-        setIsVerified(true);
+      // If no registrant name is entered, skip the verification
+      if (registrantName) {
+        const nameParts = data.registrantNameId
+          .toLowerCase()
+          .split(/\s+/); // Split the full name into parts (e.g., "Elizabeth Louise EDMONDSON")
+        
+        // Check if any part of the name entered matches any part of the full name
+        const isPartMatch = nameParts.some(part =>
+          part.includes(registrantName.toLowerCase()) // Check if the entered name part matches a part of the registrant name
+        );
+
+        // Check if the full name entered matches exactly
+        const isFullNameMatch = data.registrantNameId
+          .toLowerCase()
+          .includes(registrantName.toLowerCase()); // Case-insensitive full name match
+
+        setIsVerified(isPartMatch || isFullNameMatch); // Verified if any part or the full name matches
       } else {
-        setIsVerified(false);
+        setIsVerified(true); // If no name is entered, just verify the GMC number
       }
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
@@ -60,7 +74,7 @@ export default function Home() {
           />
           <input
             type="text"
-            placeholder="Enter Registrant Name"
+            placeholder="Enter Registrant Name (Optional)"
             value={registrantName}
             onChange={(e) => setRegistrantName(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -82,17 +96,10 @@ export default function Home() {
 
         {result && (
           <div className="mt-6 bg-white p-4 rounded-xl shadow">
-            <p className="text-sm text-gray-600">✅ GMC Number</p>
-            <p className="font-semibold text-lg">{result.gmcNumberId}</p>
-
-            <p className="text-sm text-gray-600 mt-3">👤 Registrant Name</p>
-            <p className="font-semibold text-lg">{result.registrantNameId}</p>
-
-            {/* Display "Verified" if name matches */}
-            {isVerified && (
+            {/* Display only verification result */}
+            {isVerified ? (
               <p className="mt-3 text-green-600 font-semibold">✅ Verified</p>
-            )}
-            {!isVerified && registrantName && result.registrantNameId && (
+            ) : (
               <p className="mt-3 text-red-600 font-semibold">❌ Name does not match</p>
             )}
           </div>
