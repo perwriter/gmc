@@ -9,15 +9,18 @@ type Result = {
 
 export default function Home() {
   const [gmcNumber, setGmcNumber] = useState('');
+  const [registrantName, setRegistrantName] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setResult(null);
+    setIsVerified(false);
 
     try {
       const res = await fetch('/api/verify', {
@@ -29,6 +32,13 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResult(data);
+
+      // Check if the name entered matches the registrant name
+      if (data.registrantNameId.toLowerCase() === registrantName.toLowerCase()) {
+        setIsVerified(true);
+      } else {
+        setIsVerified(false);
+      }
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
     } finally {
@@ -46,6 +56,13 @@ export default function Home() {
             placeholder="Enter GMC Number"
             value={gmcNumber}
             onChange={(e) => setGmcNumber(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="text"
+            placeholder="Enter Registrant Name"
+            value={registrantName}
+            onChange={(e) => setRegistrantName(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
@@ -70,6 +87,14 @@ export default function Home() {
 
             <p className="text-sm text-gray-600 mt-3">👤 Registrant Name</p>
             <p className="font-semibold text-lg">{result.registrantNameId}</p>
+
+            {/* Display "Verified" if name matches */}
+            {isVerified && (
+              <p className="mt-3 text-green-600 font-semibold">✅ Verified</p>
+            )}
+            {!isVerified && registrantName && result.registrantNameId && (
+              <p className="mt-3 text-red-600 font-semibold">❌ Name does not match</p>
+            )}
           </div>
         )}
       </div>
