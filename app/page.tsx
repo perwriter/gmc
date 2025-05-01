@@ -37,7 +37,7 @@ export default function Home() {
       if (registrantName) {
         const nameParts = data.registrantNameId
           .toLowerCase()
-          .split(/\s+/); // Split the full name into parts (e.g., "Elizabeth Louise EDMONDSON")
+          .split(/\s+/); /
         
         // Check if any part of the name entered matches any part of the full name
         const isPartMatch = nameParts.some(part =>
